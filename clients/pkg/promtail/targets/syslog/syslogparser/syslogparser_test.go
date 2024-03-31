@@ -47,7 +47,7 @@ func TestParseStream_ValidParseError(t *testing.T) {
 	require.NoError(t, err)
 
 	require.Equal(t, 1, len(results))
-	require.EqualError(t, results[0].Error, "expecting a RFC3339MICRO timestamp or a nil value [col 6]")
+	require.EqualError(t, results[0].Error, "expecting a RFC3339MICRO timestamp or a nil value [col 6] while ingesting: <13>1       First")
 	require.True(t, results[0].Message.(*rfc5424.SyslogMessage).Valid())
 }
 

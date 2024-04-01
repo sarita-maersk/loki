@@ -1,0 +1,19 @@
+name: Build
+
+on:
+  push:
+    branches: '**'
+
+jobs:
+  promtail:
+    name: promtail
+    uses: ./.github/workflows/build.yml
+    with:
+      prefix: dev
+      env: Dev
+      registry: harbor.maersk.io/pensieve
+      app: promtail-debug
+      dockerfile: clients/cmd/promtail/Dockerfile
+    secrets:
+      vaultRoleId: ${{ secrets.VAULT_ROLE_ID }}
+      vaultSecretId: ${{ secrets.VAULT_SECRET_ID }}

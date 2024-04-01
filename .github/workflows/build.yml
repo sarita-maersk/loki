@@ -1,0 +1,59 @@
+on:
+  workflow_call:
+    inputs:
+      env:
+        required: true
+        type: string
+      registry:
+        required: true
+        type: string
+      app:
+        required: true
+        type: string
+      dockerfile:
+        required: true
+        type: string
+      prefix:
+        required: true
+        type: string
+    secrets:
+      vaultRoleId:
+        required: true
+      vaultSecretId:
+        required: true
+
+jobs:
+  build:
+    name: Build
+    environment: ${{ inputs.env }}
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Generate build ID
+        id: prep
+        run: |
+          sha=${GITHUB_SHA::8}
+          ts=$(date +%s)
+          echo "BUILD_ID=${{ inputs.prefix }}-${sha}-${ts}" >> $GITHUB_OUTPUT
+      - name: Import Vault secrets
+        uses: hashicorp/vault-action@v2.4.3
+        id: credentials
+        with:
+          url: https://vault.maersk-digital.net
+          tlsSkipVerify: false
+          exportEnv: false
+          method: approle
+          roleId: ${{ secrets.vaultRoleId }}
+          secretId: ${{ secrets.vaultSecretId }}
+          secrets: |
+            telemetry-kv/data/readable/harbor/pensieve-write-user PASSWORD;
+            telemetry-kv/data/readable/harbor/pensieve-write-user USERNAME;
+      - name: Registry login
+        run: docker login -u ${{ steps.credentials.outputs.USERNAME }} -p ${{ steps.credentials.outputs.PASSWORD }} ${{ inputs.registry }}
+      - name: Build
+        run: |
+          docker build --tag ${{ inputs.registry }}/${{ inputs.app }}:${{ steps.prep.outputs.BUILD_ID }} -f ${{ inputs.dockerfile }} . --no-cache
+      - name: Push
+        run: |
+          docker push ${{ inputs.registry }}/${{ inputs.app }}:${{ steps.prep.outputs.BUILD_ID }}

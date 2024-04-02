@@ -21,7 +21,7 @@ import (
 func ParseStream(r io.Reader, callback func(res *syslog.Result), maxMessageLength int) error {
 	var buffer bytes.Buffer
 	bytesCopied, _ := io.Copy(&buffer, r)
-	level.Info(log.Logger).Log("msg", "Syslog stream reading", buffer.String(), "total bytes", bytesCopied)
+	level.Info(log.Logger).Log("msg", "syslog stream reading", buffer.String(), "total bytes", bytesCopied)
 
 	newReader := bytes.NewReader(buffer.Bytes())
 

@@ -24,7 +24,7 @@ func ParseStream(r io.Reader, callback func(res *syslog.Result), maxMessageLengt
 	if err != nil {
 		return err
 	}
-	level.Info(log.Logger).Log("msg", "syslog stream reading", buffer.String(), "total bytes", bytesCopied)
+	level.Info(log.Logger).Log("msg", "parsing syslog stream", "message", buffer.String(), "total bytes", bytesCopied)
 
 	newReader := bytes.NewReader(buffer.Bytes())
 

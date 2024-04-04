@@ -2,9 +2,13 @@ package syslogparser
 
 import (
 	"bufio"
+	"bytes"
 	"fmt"
 	"io"
 
+	"github.com/go-kit/log/level"
+
+	"github.com/grafana/loki/pkg/util/log"
 	"github.com/influxdata/go-syslog/v3"
 	"github.com/influxdata/go-syslog/v3/nontransparent"
 	"github.com/influxdata/go-syslog/v3/octetcounting"
@@ -15,8 +19,16 @@ import (
 // detects octet counting.
 // The function returns on EOF or unrecoverable errors.
 func ParseStream(r io.Reader, callback func(res *syslog.Result), maxMessageLength int) error {
-	buf := bufio.NewReaderSize(r, 1<<10)
+	var buffer bytes.Buffer
+	bytesCopied, err := io.Copy(&buffer, r)
+	if err != nil {
+		return err
+	}
+	level.Info(log.Logger).Log("msg", "syslog stream reading", buffer.String(), "total bytes", bytesCopied)
 
+	newReader := bytes.NewReader(buffer.Bytes())
+
+	buf := bufio.NewReaderSize(newReader, 1<<10)
 	b, err := buf.ReadByte()
 	if err != nil {
 		return err

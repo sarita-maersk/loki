@@ -51,6 +51,23 @@ func TestParseStream_ValidParseError(t *testing.T) {
 	require.True(t, results[0].Message.(*rfc5424.SyslogMessage).Valid())
 }
 
+func TestParseStream_ValidParseErrorWithTimestamp(t *testing.T) {
+	// This message can not parse fully but is valid when using the BestEffort Parser Option.
+	r := strings.NewReader("17 <13>1 2018-10-11T22:14:15.003Z mymach.it e - 1 [ex@32473 iut=3] An application event log entry...")
+
+	results := make([]*syslog.Result, 0)
+	cb := func(res *syslog.Result) {
+		results = append(results, res)
+	}
+
+	err := syslogparser.ParseStream(r, cb, defaultMaxMessageLength)
+	require.NoError(t, err)
+
+	require.Equal(t, 2, len(results))
+	require.EqualError(t, results[0].Error, "expecting a RFC3339MICRO timestamp or a nil value [col 17] while ingesting: <13>1 2018-10-11T")
+	require.True(t, results[0].Message.(*rfc5424.SyslogMessage).Valid())
+}
+
 func TestParseStream_OctetCounting_LongMessage(t *testing.T) {
 	r := strings.NewReader("8198 <13>1 - - - - - - First")
 

@@ -2,6 +2,7 @@ package syslogparser
 
 import (
 	"bufio"
+	"bytes"
 	"fmt"
 	"io"
 
@@ -18,19 +19,23 @@ import (
 // detects octet counting.
 // The function returns on EOF or unrecoverable errors.
 func ParseStream(r io.Reader, callback func(res *syslog.Result), maxMessageLength int) error {
-	// var buffer bytes.Buffer
-	// bytesCopied, _ := io.Copy(&buffer, r)
+	level.Info(log.Logger).Log("msg", "ParseStream function")
+	var buffer bytes.Buffer
+	bytesCopied, err := io.Copy(&buffer, r)
+	if err != nil {
+		return err
+	}
+	level.Info(log.Logger).Log("msg", "parsing syslog stream", "message", buffer.String(), "total bytes", bytesCopied)
 
-	// level.Info(log.Logger).Log("msg", "parsing syslog stream", "message", buffer.String(), "total bytes", bytesCopied)
+	newReader := bytes.NewReader(buffer.Bytes())
 
-	// newReader := bytes.NewReader(buffer.Bytes())
+	buf := bufio.NewReaderSize(newReader, 1<<10)
 
-	buf := bufio.NewReaderSize(r, 1<<10)
 	b, err := buf.ReadByte()
 	if err != nil {
 		return err
 	}
-	level.Info(log.Logger).Log("msg", "syslog stream reader size", "message", b)
+
 	_ = buf.UnreadByte()
 
 	if b == '<' {

@@ -4,6 +4,9 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/go-kit/log/level"
+
+	"github.com/grafana/loki/pkg/util/log"
 	"github.com/influxdata/go-syslog/v3"
 	"github.com/influxdata/go-syslog/v3/common"
 )
@@ -120,7 +123,7 @@ func (m *machine) Parse(input []byte) (syslog.Message, error) {
 	m.eof = len(input)
 	m.err = nil
 	output := &syslogMessage{}
-
+	level.Info(log.Logger).Log("msg", "input syslog stream", "message", string(input))
 	{
 		m.cs = start
 	}
